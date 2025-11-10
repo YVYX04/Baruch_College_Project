@@ -37,8 +37,14 @@ namespace yvan
             }
 
             // Ensure the end value is included
+            // This is clearly a design choice and this means that
+            // the last step might not be excatly equal to h
             if (mesh.back() < end)
             {
+                // first remove the last value
+                mesh.pop_back();
+
+                // push back end
                 mesh.push_back(end);
             }
 

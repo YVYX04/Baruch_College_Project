@@ -256,4 +256,175 @@ TEST_CASE(Util_Parity_Functions)
     return true;
 }
 
+// --- util::Grid2D Tests ---
+// Test Case 006: util::Grid2D Basic Functionality
+TEST_CASE(Util_Grid2D_Basic_Functionality)
+{
+    // matrix of int
+    yu::Grid2D<int> M1(2, 3); // 2 rows, 3 cols
 
+    // fill the matrix
+    int count = 1;
+    for (size_t i = 0; i < 2; ++i)
+    {
+        for (size_t j = 0; j < 3; ++j)
+        {
+            // test accessor for setting data
+            M1(i, j) = count;
+            ++count;
+        }
+    }
+
+    // check that it was filled properly and that
+    // accessor works
+    ASSERT_EQ(M1(1, 2), 6);
+
+    return true;
+
+}
+
+
+// --- util::param_grid Tests ---
+// Test Case 007: util::param_grid Functionality
+TEST_CASE(sweep_1d_basic_functionality)
+{
+    // Base OptionParams
+    yo::OptionParams base_params{};
+
+    // Sweep asset_price from 50 to 70 with step 5
+    double start = 50.0;
+    double end = 70.0;
+    double step = 5.0;
+
+    std::vector<yo::OptionParams> param_grid =
+        yu::sweep_1d(base_params, &yo::OptionParams::asset_price, start, end, step);
+
+    // Expected number of points: (70 - 50) / 5 + 1 = 5
+    ASSERT_EQ(param_grid.size(), 5);
+
+    // Check first and last values
+    ASSERT_EQ(param_grid.front().asset_price, 50.0);
+    ASSERT_EQ(param_grid.back().asset_price, 70.0);
+
+    return true;
+}
+
+// Test Case 008: util::sweep_2d Basic Functionality
+TEST_CASE(sweep_2d_basic_functionality)
+{
+    // Base OptionParams
+    yo::OptionParams base_params{};
+
+    // Sweep asset_price from 50 to 60 with step 5
+    double start_x = 50.0;
+    double end_x = 60.0;
+    double step_x = 5.0;
+
+    // Sweep strike_price from 70 to 80 with step 5
+    double start_y = 70.0;
+    double end_y = 80.0;
+    double step_y = 5.0;
+
+    yu::Grid2D<yo::OptionParams> param_grid =
+        yu::sweep_2d(base_params,
+                      &yo::OptionParams::asset_price, start_x, end_x, step_x,
+                      &yo::OptionParams::strike_price, start_y, end_y, step_y);
+
+    // Expected grid size: 3 rows (50,55,60) x 3 cols (70,75,80)
+    ASSERT_EQ(param_grid.nrows, 3);
+    ASSERT_EQ(param_grid.ncols, 3);
+
+    // Check some values
+    ASSERT_EQ(param_grid(0, 0).asset_price, 50.0);
+    ASSERT_EQ(param_grid(0, 0).strike_price, 70.0);
+    ASSERT_EQ(param_grid(2, 2).asset_price, 60.0);
+    ASSERT_EQ(param_grid(2, 2).strike_price, 80.0);
+
+    return true;
+}
+
+// --- BSEngine Tests with util::param_grid ---
+// Test Case 009: BSEngine Price Function over 1D Parameter Grid
+TEST_CASE(BSEngine_Price_Function_1D_Parameter_Grid)
+{
+    // Create a Black-Scholes Engine
+    ye::BSEngine bs_engine{};
+
+    // Base OptionParams
+    yo::OptionParams base_params{};
+
+    // Sweep asset_price from 50 to 70 with step 5
+    double start = 50.0;
+    double end = 70.0;
+    double step = 5.0;
+
+    std::vector<yo::OptionParams> param_grid =
+        yu::sweep_1d(base_params, &yo::OptionParams::asset_price, start, end, step);
+
+    // Price options over the parameter grid
+    std::vector<double> prices = bs_engine.price(param_grid);
+
+    // Expected number of prices
+    ASSERT_EQ(prices.size(), param_grid.size());
+
+    // Check that prices increase with asset price
+    for (size_t i = 1; i < prices.size(); ++i)
+    {
+        ASSERT_TRUE(prices[i] >= prices[i - 1]);
+    }
+
+    return true;
+}
+
+// Test Case 010: BSEngine Price Function over 2D param grid
+TEST_CASE(BSEngine_Price_Function_2D_Parameter_Grid)
+{
+    // Create black and scholes engine
+    ye::BSEngine bs_engine;
+
+    // Basic config for OptionParmas
+    yo::OptionParams base{};
+
+    // sweep over volatility
+    // (0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5) (8 points)
+    double start_sig = 0.15;
+    double end_sig = 0.5;
+    double step_sig = 0.05;
+
+    // sweep over exercise time
+    // (0.25, 0.5, 0.75, 1.00, 1.25, 1.5) (6 points)
+    double start_exe_t = 0.25;
+    double end_exe_t = 1.5; 
+    double step_exe_t = 0.25;
+
+    // generate grid
+    auto sig_exe_grid = yu::sweep_2d(base,
+    &yo::OptionParams::volatility,
+    start_sig, end_sig, step_sig,
+    &yo::OptionParams::exercise_time,
+    start_exe_t, end_exe_t, step_exe_t);
+
+    // check grid dim
+    ASSERT_EQ(sig_exe_grid.nrows, 8);
+    ASSERT_EQ(sig_exe_grid.ncols, 6);
+
+
+    // check the first values and end values
+    ASSERT_EQ(sig_exe_grid(0, 0).volatility, 0.15);
+    ASSERT_EQ(sig_exe_grid(0, 0).exercise_time, 0.25);
+    ASSERT_EQ(sig_exe_grid(7, 5).volatility, 0.5);
+    ASSERT_EQ(sig_exe_grid(7, 5).exercise_time, 1.5);
+
+    // use the bs engine to generate back a grid
+    // of prices (surface)
+    auto price_surface = bs_engine.price(sig_exe_grid);
+
+    // The price of a call option is increasing in both
+    // the volatility and exercise_time. We check that for one
+    // two points
+    bool smaller = price_surface(0, 0) < price_surface(7, 5);
+    ASSERT_TRUE(smaller);
+
+    return true;
+    
+}

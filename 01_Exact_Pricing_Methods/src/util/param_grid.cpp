@@ -86,7 +86,7 @@ namespace yvan
             std::vector<double> mesh_y = util::mesh_vector(start_y, end_y, step_y);
 
             // Prepare Grid2D
-            util::Grid2D<OptionParams> grid;
+            util::Grid2D<OptionParams> grid; // use default constructor for not dflt construct of OptionParams
             grid.nrows = mesh_x.size();
             grid.ncols = mesh_y.size();
             grid.data.reserve(grid.nrows * grid.ncols); // reserve space

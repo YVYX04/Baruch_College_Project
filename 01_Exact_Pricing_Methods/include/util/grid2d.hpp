@@ -29,6 +29,12 @@ yvan
             std::vector<T> data; // row-major
             std::size_t nrows{};
             std::size_t ncols{};
+
+            // basic constructor
+            Grid2D() = default;
+            Grid2D(std::size_t rows, std::size_t cols) :
+                data(rows * cols), nrows(rows), ncols(cols) { }
+
             // convenience accessor
             const T& operator()(std::size_t i, std::size_t j) const
             {
