@@ -14,9 +14,6 @@
 #include "../../include/options/EuropeanOption.hpp"
 #include "../../include/util/distributions.hpp"
 
-// Boost libraries for normal distribution
-#include <boost/math/distributions/normal.hpp>
-
 #include <cmath>
 
 namespace yvan
@@ -40,8 +37,6 @@ namespace yvan
         // --- Price ---
         double BSEngine::price(const option::OptionParams& p) const
         {
-            // Create a normal distribution object
-            boost::math::normal_distribution<double> normal_dist(0.0, 1.0);
 
             // Compute d1 and d2
             double D1 = d1(p);
