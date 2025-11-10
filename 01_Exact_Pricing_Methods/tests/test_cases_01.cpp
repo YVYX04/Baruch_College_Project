@@ -15,6 +15,7 @@ functionality of the implemented classes and functions.
 #include "../include/engines/BSEngine.hpp"
 #include "../include/engines/IGreeks.hpp"
 #include "../include/engines/BSEngineGreeks.hpp"
+#include "../include/engines/NumericalEngineGreeks.hpp"
 #include "../include/util/grid2d.hpp"
 #include "../include/util/parity.hpp"
 #include "../include/util/param_grid.hpp"
@@ -571,4 +572,129 @@ TEST_CASE(BSEngineGreeks_Gamma_2D_Parameter_Grid)
     return true;
 }
 
-    
+
+// --- Tests with NumericalEngineGreeks ---
+// Test Case 015: NumericalEngineGreeks Delta Finite Difference
+TEST_CASE(NumericalEngineGreeks_Delta_Finite_Difference)
+{
+    // Create a pricing engine
+    ye::BSEngine bs_engine;
+
+    // Create an param configuration
+    // based on the same batch_01 data
+    yo::OptionParams params{};
+    params.asset_price = 105.0;
+    params.strike_price = 100.0;
+    params.exercise_time = 0.5;
+    params.r = 0.1;
+    params.cost_of_carry = 0.0;
+    params.volatility = 0.36;
+    params.option_type = yo::OptionType::Call;
+
+    // Create NumericalEngineGreeks instance
+    // with default h = 0.01
+    ye::NumericalEngineGreeks num_greeks{bs_engine};
+
+    // Compute delta
+    double delta_num = num_greeks.delta(params);
+
+    // Expected delta from BSEngineGreeks
+    double expected_delta = 0.5946; // from previous test case
+
+    // Expect near with high tolerance
+    EXPECT_NEAR(delta_num, expected_delta, 1e-2); // PASSED
+
+    // Expect near with low tolerance
+    EXPECT_NEAR(delta_num, expected_delta, 1e-4); // PASSED
+
+    // compute the put delta
+    params.option_type = yo::OptionType::Put;
+    double delta_put_num = num_greeks.delta(params);
+    double expected_delta_put = -0.3566; // from previous test case
+
+    // Expect near with high tolerance
+    EXPECT_NEAR(delta_put_num, expected_delta_put, 1e-2); // PASSED
+
+    // Expect near with low tolerance
+    EXPECT_NEAR(delta_put_num, expected_delta_put, 1e-4); // PASSED
+
+    return true;
+
+}
+
+// Test Case 016: Precision_with_Varying_h_in_NumericalEngineGreeks_Delta
+TEST_CASE(Precision_with_Varying_h_in_NumericalEngineGreeks_Delta)
+{
+    // Create a pricing engine
+    ye::BSEngine bs_engine;
+
+    // Create an param configuration
+    // based on the same batch_01 data
+    yo::OptionParams params{};
+    params.asset_price = 105.0;
+    params.strike_price = 100.0;
+    params.exercise_time = 0.5;
+    params.r = 0.1;
+    params.cost_of_carry = 0.0;
+    params.volatility = 0.36;
+    params.option_type = yo::OptionType::Call;
+
+    // Expected delta from BSEngineGreeks
+    double expected_delta = 0.5946; // from previous test case
+
+    // Test with varying h values
+    std::vector<double> h_values = {5, 1, 0.5, 0.1, 0.01, 0.001, 0.0001};
+    for (double h : h_values)
+    {
+        ye::NumericalEngineGreeks num_greeks{bs_engine, h};
+        double delta_num = num_greeks.delta(params);
+
+        // Expect near with 2 decimal places
+        EXPECT_NEAR(delta_num, expected_delta, 1e-2);
+
+        // Expect near with 4 decimal places
+        // NOTE: For h = 5, this test FAILED! (non-fatal)
+        EXPECT_NEAR(delta_num, expected_delta, 1e-4);
+    }
+
+    return true;
+}
+
+// Test Case 017: NumericalEngineGreeks Gamma Finite Difference vs BSEngineGreeks
+TEST_CASE(NumericalEngineGreeks_Gamma_Finite_Difference_vs_BSEngineGreeks)
+{
+    // Create a pricing engine
+    ye::BSEngine bs_engine;
+
+    // Create an param configuration
+    // based on the same batch_01 data
+    yo::OptionParams params{};
+    params.asset_price = 105.0;
+    params.strike_price = 100.0;
+    params.exercise_time = 0.5;
+    params.r = 0.1;
+    params.cost_of_carry = 0.0;
+    params.volatility = 0.36;
+    params.option_type = yo::OptionType::Call;
+
+    // Create NumericalEngineGreeks instance
+    // with default h = 0.01
+    ye::NumericalEngineGreeks num_greeks{bs_engine};
+
+    // Compute gamma using NumericalEngineGreeks
+    double gamma_num = num_greeks.gamma(params);
+
+    // Compute gamma using BSEngineGreeks
+    ye::BSEngineGreeks bs_greeks;
+    double gamma_bs = bs_greeks.gamma(params);
+
+    // Expect near with high tolerance
+    EXPECT_NEAR(gamma_num, gamma_bs, 1e-2); // PASSED with h = 0.01
+
+    // Expect near with low tolerance
+    EXPECT_NEAR(gamma_num, gamma_bs, 1e-4); // PASSED with h = 0.01
+
+    return true;
+
+}
+
