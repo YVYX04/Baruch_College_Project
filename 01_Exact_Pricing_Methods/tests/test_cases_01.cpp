@@ -13,6 +13,8 @@ functionality of the implemented classes and functions.
 #include "../include/options/EuropeanOption.hpp"
 #include "../include/engines/IPricer.hpp"
 #include "../include/engines/BSEngine.hpp"
+#include "../include/engines/IGreeks.hpp"
+#include "../include/engines/BSEngineGreeks.hpp"
 #include "../include/util/grid2d.hpp"
 #include "../include/util/parity.hpp"
 #include "../include/util/param_grid.hpp"
@@ -428,3 +430,145 @@ TEST_CASE(BSEngine_Price_Function_2D_Parameter_Grid)
     return true;
     
 }
+
+// --- BSEngineGreeks Tests ---
+// Test Case 011: Test Basic Functionality of the BSEngineGreeks
+TEST_CASE(BSEngineGreeks_Basics)
+{
+    // create an instance of the engine
+    ye::BSEngineGreeks bs_greeks;
+
+    // create the OptionParams configuration
+    // given in the fact sheet
+    // K = 100, S = 105, T = 0.5, r = 0.1, b = 0 and sig = 0.36
+    yo::OptionParams batch_01;
+    batch_01.asset_price = 105.0;
+    batch_01.strike_price = 100.0;
+    batch_01.exercise_time = 0.5;
+    batch_01.r = 0.1;
+    batch_01.cost_of_carry = 0.0;
+    batch_01.volatility = 0.36;
+
+    // compute delta call
+    double delta_C = bs_greeks.delta(batch_01);
+    ASSERT_NEAR(delta_C, 0.5946, 1e-4);
+
+    // switch to put
+    batch_01.option_type = yo::OptionType::Put;
+
+    // compute delta put
+    double delta_P = bs_greeks.delta(batch_01);
+    ASSERT_NEAR(delta_P, -0.3566, 1e-4);
+
+    return true;
+
+}
+
+// Test Case 012: BSEngineGreeks coupled with sweep_1d()
+TEST_CASE(BSEngineGreeks_Delta_Range_of_S)
+{
+    // create an instance of the engine
+    ye::BSEngineGreeks bs_greeks;
+
+    // create a base config with default params
+    yo::OptionParams base{};
+
+    // create a vector with increasing value of S := asset_price
+    double start_S = 80;
+    double end_S = 120;
+    double step_S = 10; // [80, 90, 100, 110, 120] -> 5 data points
+    auto vector_S = yu::sweep_1d(base, &yo::OptionParams::asset_price,
+                                start_S, end_S, step_S);
+
+    // values of delta
+    std::vector<double> delta_vs_S = bs_greeks.delta(vector_S);
+
+    // check size of the vector
+    ASSERT_EQ(delta_vs_S.size(), 5);
+
+    return true;
+}
+
+// Test Case 013: BSEngineGreeks Delta over 2D param grid
+TEST_CASE(BSEngineGreeks_Delta_2D_Parameter_Grid)
+{
+    // create an instance of the engine
+    ye::BSEngineGreeks bs_greeks;
+
+    // Basic config for OptionParmas
+    yo::OptionParams base{};
+
+    // sweep over asset price S
+    // (80, 90, 100, 110, 120) (5 points)
+    double start_S = 80.0;
+    double end_S = 120.0;
+    double step_S = 10.0;
+
+    // sweep over volatility sig
+    // (0.2, 0.3, 0.4, 0.5) (4 points)
+    double start_sig = 0.2;
+    double end_sig = 0.5;
+    double step_sig = 0.1;
+
+    // generate grid
+    auto S_sig_grid = yu::sweep_2d(base,
+    &yo::OptionParams::asset_price, start_S, end_S, step_S,
+    &yo::OptionParams::volatility, start_sig, end_sig, step_sig);
+
+    // check grid dim
+    ASSERT_EQ(S_sig_grid.nrows, 5);
+    ASSERT_EQ(S_sig_grid.ncols, 4);
+
+    // use the bs engine to generate back a grid
+    // of delta values (surface)
+    auto delta_surface = bs_greeks.delta(S_sig_grid);
+
+    // check output grid dim
+    ASSERT_EQ(delta_surface.nrows, 5);
+    ASSERT_EQ(delta_surface.ncols, 4);
+
+    return true;
+}
+
+// Test Case 014: BSEngineGreeks Gamma over 2D param grid
+TEST_CASE(BSEngineGreeks_Gamma_2D_Parameter_Grid)
+{
+    // create an instance of the engine
+    ye::BSEngineGreeks bs_greeks;
+
+    // Basic config for OptionParmas
+    yo::OptionParams base{};
+
+    // sweep over asset price S
+    // (80, 90, 100, 110, 120) (5 points)
+    double start_S = 80.0;
+    double end_S = 120.0;
+    double step_S = 10.0;
+
+    // sweep over volatility sig
+    // (0.2, 0.3, 0.4, 0.5) (4 points)
+    double start_sig = 0.2;
+    double end_sig = 0.5;
+    double step_sig = 0.1;
+
+    // generate grid
+    auto S_sig_grid = yu::sweep_2d(base,
+    &yo::OptionParams::asset_price, start_S, end_S, step_S,
+    &yo::OptionParams::volatility, start_sig, end_sig, step_sig);
+
+    // check grid dim
+    ASSERT_EQ(S_sig_grid.nrows, 5);
+    ASSERT_EQ(S_sig_grid.ncols, 4);
+
+    // use the bs engine to generate back a grid
+    // of gamma values (surface)
+    auto gamma_surface = bs_greeks.gamma(S_sig_grid);
+
+    // check output grid dim
+    ASSERT_EQ(gamma_surface.nrows, 5);
+    ASSERT_EQ(gamma_surface.ncols, 4);
+
+    return true;
+}
+
+    
