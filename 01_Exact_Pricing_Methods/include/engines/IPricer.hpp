@@ -39,9 +39,14 @@ namespace yvan
             virtual std::vector<double>
             price(const std::vector<option::OptionParams>& batch) const
             {
+                // init return vector
                 std::vector<double> out;
                 out.reserve(batch.size());
+
+                // fill in the vector
                 for (const auto& p : batch) out.push_back(price(p));
+
+                // return
                 return out;
             }
 
@@ -49,13 +54,19 @@ namespace yvan
             virtual util::Grid2D<double>
             price(const util::Grid2D<option::OptionParams>& grid) const
             {
-                util::Grid2D<double> out;
-                out.nrows = grid.nrows;
-                out.ncols = grid.ncols;
-                out.data.resize(out.nrows * out.ncols);
+                // init the return grid to 0.0 everywhere
+                util::Grid2D<double> out(grid.nrows,  grid.ncols);
+
+                // iterate over the configs and fill out
                 for (std::size_t i = 0; i < grid.nrows; ++i)
+                {
                     for (std::size_t j = 0; j < grid.ncols; ++j)
+                    {
                         out(i,j) = price(grid(i,j));
+                    }
+                }
+
+                // return 
                 return out;
             }
         };
