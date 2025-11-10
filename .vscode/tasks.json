@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cppbuild",
-			"label": "C/C++: g++-15 build test file",
+			"label": "C/C++: g++-15 build main file",
 			"command": "/opt/homebrew/bin/g++-15",
 			"args": [
 				"-std=c++20",
@@ -19,6 +19,7 @@
 				"-g",
 				// compile all files in src/ directory
 				"../src/**/*.cpp",
+				"test_cases_01.cpp",
 				"${file}",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}"

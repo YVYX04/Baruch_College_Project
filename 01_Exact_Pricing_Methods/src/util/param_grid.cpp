@@ -28,7 +28,7 @@ namespace yvan
         // sweep_1d(.)
         std::vector<OptionParams>
         sweep_1d(const OptionParams& base,
-                double OptionParams::* field,
+                double OptionParams::* field, // pointer to member
                 double start, double end, double step)
         {
             // Validate inputs
@@ -45,7 +45,7 @@ namespace yvan
             for (double val = start; val <= end; val += step)
             {
                 OptionParams params = base; // copy base
-                params.*field = val;
+                params.*field = val; // pointer to member syntax 
                 grid.push_back(params);
             }
 
