@@ -61,10 +61,7 @@ equal length intervals $\Delta t$. Once this has been established, we consider t
 
 $$
 \begin{equation}
-\begin{align*}
-dX &= aXdt + bXdW, \quad a, b \in \mathbb{R} \\
-X(0) &= A
-\end{align*}
+dX = aXdt + bXdW, \quad a, b \in \mathbb{R}, \quad X(0) = A
 \end{equation}
 $$
 
