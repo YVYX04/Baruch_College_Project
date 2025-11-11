@@ -27,4 +27,4 @@ It showcases the implementation of computational finance models using modern C++
 
 ---
 
-***Last update:*** *`Nov. 8 2025, 15:34 UTC`*
+***Last update:*** *`Nov. 11 2025, 00:50 UTC`*
