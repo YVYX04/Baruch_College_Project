@@ -11,8 +11,10 @@ functionality of the implemented classes and functions.
 #include <iomanip>
 #include "../include/options/Option.hpp"
 #include "../include/options/EuropeanOption.hpp"
+#include "../include/options/PerpetualAmericanOption.hpp"
 #include "../include/engines/IPricer.hpp"
 #include "../include/engines/BSEngine.hpp"
+#include "../include/engines/PerpetualAmericanEngine.hpp"
 #include "../include/engines/IGreeks.hpp"
 #include "../include/engines/BSEngineGreeks.hpp"
 #include "../include/engines/NumericalEngineGreeks.hpp"
@@ -698,3 +700,173 @@ TEST_CASE(NumericalEngineGreeks_Gamma_Finite_Difference_vs_BSEngineGreeks)
 
 }
 
+// --- PerpetualAmericanOption Tests ---
+// Test Case 018: Test PerpetualAmericanOption Constructors, Getters and Setters
+TEST_CASE(PerpetualAmericanOption_Constructors_Getters_Setters)
+{
+    // Default constructor for european option
+    yo::PerpetualAmericanOption pa_op_01{};
+
+    // Check randomly some default params
+    double ass_price = pa_op_01.asset_price();
+    ASSERT_EQ(ass_price, 60.0);
+
+    // Check that OptionType::Call is the default
+    int call_id = static_cast<int>(pa_op_01.option_type());
+    ASSERT_EQ(call_id, 1);
+
+    // Try one numerical setter
+    pa_op_01.asset_price(62.0);
+    ass_price = pa_op_01.asset_price();
+    ASSERT_EQ(ass_price, 62.0);
+
+    // Copy ctor
+    yo::PerpetualAmericanOption pa_op_02{pa_op_01};
+    ASSERT_EQ(pa_op_02.asset_price(), 62.0);
+
+    // Memory independency
+    pa_op_01.asset_price(63.0);
+    ASSERT_EQ(pa_op_02.asset_price(), 62.0);
+    // Move ctor
+    yo::PerpetualAmericanOption pa_op_03{std::move(pa_op_01)};
+    ASSERT_EQ(pa_op_03.asset_price(), 63.0);
+
+    // Parameterized constructor
+    yo::OptionParams config{.asset_price = 64.0};
+    yo::PerpetualAmericanOption pa_op_04{config};
+    ASSERT_EQ(pa_op_04.asset_price(), 64.0);
+
+    // switch option type (technically a setter)
+    pa_op_04.switch_type();
+    int put_id = static_cast<int>(pa_op_04.option_type());
+    ASSERT_EQ(put_id, -1);
+
+    return true;
+}
+
+// Test Case 019: Test PerpetualAmericanEngine Price Calculation
+TEST_CASE(PerpetualAmericanEngine_Price_Calculation)
+{
+    // Create an engine for Perpetual American Options
+    ye::PerpetualAmericanEngine pa_engine{};
+
+    // Create a Call Perpetual American Option
+    // with given parameters
+    yo::PerpetualAmericanOption pa_option{};
+
+    // data: K = 100, sig = 0.1, r = 0.1, b = 0.02, S = 110
+    pa_option.strike_price(100.0);
+    pa_option.volatility(0.1);
+    pa_option.r(0.1);
+    pa_option.cost_of_carry(0.02);
+    pa_option.asset_price(110.0);
+
+    // Price the Call Option
+    double call_price = pa_engine.price(pa_option.get_params());
+
+    // Expected price from known data
+    double expected_C_batch_01 = 18.5035; // Approximate value
+    ASSERT_NEAR(call_price, expected_C_batch_01, 1e-5);
+
+    // Change to Put option
+    pa_option.switch_type();
+
+    // Price the Put Option
+    double put_price = pa_engine.price(pa_option.get_params());
+    double expected_P_batch_01 = 3.03106; // Approximate value
+    ASSERT_NEAR(put_price, expected_P_batch_01, 1e-5);
+
+    return true;
+}
+
+// Test Case 020: PerpetualAmericanEngine Price over 1D Parameter Grid
+TEST_CASE(PerpetualAmericanEngine_Price_1D_Parameter_Grid)
+{
+    // Create an engine for Perpetual American Options
+    ye::PerpetualAmericanEngine pa_engine{};
+
+    // Create a Call Perpetual American Option
+    // with given parameters
+    yo::PerpetualAmericanOption pa_option{};
+
+    // data: K = 100, sig = 0.1, r = 0.1, b = 0.02, S = 110
+    pa_option.strike_price(100.0);
+    pa_option.volatility(0.1);
+    pa_option.r(0.1);
+    pa_option.cost_of_carry(0.02);
+    pa_option.asset_price(110.0);
+
+    // Sweep asset_price from 80 to 110 with step 10
+    double start = 80.0;
+    double end = 110.0;
+    double step = 10.0;
+    std::vector<yo::OptionParams> param_grid =
+        yu::sweep_1d(pa_option.get_params(), &yo::OptionParams::asset_price, start, end, step);
+
+    // Price options over the parameter grid
+    std::vector<double> prices = pa_engine.price(param_grid);
+
+    // Expected number of prices
+    ASSERT_EQ(prices.size(), param_grid.size());
+
+    // Check that the final price matches known data
+    double expected_final_price = 18.5035; // for S = 110
+    ASSERT_NEAR(prices.back(), expected_final_price, 1e-5);
+
+    // Check that prices increase with asset price
+    for (size_t i = 1; i < prices.size(); ++i)
+    {
+        ASSERT_TRUE(prices[i] >= prices[i - 1]);
+    }
+
+    return true;
+}
+
+// Test Case 021: PerpetualAmericanEngine Price over 2D param grid
+TEST_CASE(PerpetualAmericanEngine_Price_2D_Parameter_Grid)
+{
+    // Create an engine for Perpetual American Options
+    ye::PerpetualAmericanEngine pa_engine{};
+
+    // Create a Call Perpetual American Option
+    // with given parameters
+    yo::PerpetualAmericanOption pa_option{};
+
+    // data: K = 100, sig = 0.1, r = 0.1, b = 0.02, S = 110
+    pa_option.strike_price(100.0);
+    pa_option.volatility(0.1);
+    pa_option.r(0.1);
+    pa_option.cost_of_carry(0.02);
+    pa_option.asset_price(110.0);
+
+    // sweep over volatility
+    // (0.05, 0.1, 0.15, 0.2) (4 points)
+    double start_sig = 0.05;
+    double end_sig = 0.2;
+    double step_sig = 0.05;
+
+    // sweep over asset price S
+    // (90, 100, 110) (3 points)
+    double start_S = 90.0;
+    double end_S = 110.0;
+    double step_S = 10.0;
+
+    // generate grid
+    auto sig_S_grid = yu::sweep_2d(pa_option.get_params(),
+    &yo::OptionParams::volatility, start_sig, end_sig, step_sig,
+    &yo::OptionParams::asset_price, start_S, end_S, step_S);
+
+    // check grid dim
+    ASSERT_EQ(sig_S_grid.nrows, 4);
+    ASSERT_EQ(sig_S_grid.ncols, 3);
+
+    // use the pa engine to generate back a grid
+    // of prices (surface)
+    auto price_surface = pa_engine.price(sig_S_grid);
+
+    // Check price at known point: sig = 0.1, S = 110
+    double expected_price = 18.5035;
+    ASSERT_NEAR(price_surface(1, 2), expected_price, 1e-5);
+
+    return true;
+}

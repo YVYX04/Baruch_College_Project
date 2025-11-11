@@ -1,17 +1,16 @@
 /*
                             +–––––––––––––––––––––––––––––––––+
-                            |           BSEngine Class        |
+                            |    PerpetualAmericanEngine      |
                             |  Copyright © 2025 Yvan Richard  |
                             +–––––––––––––––––––––––––––––––––+
 
                             This object is an engine for computing
-                            the price of derivatives (namely options),
-                            based on the exact formula of Black and
-                            Scholes.
+                            the price of a perpetual American option
+                            based on the closed-form formula.
 */
 
-#ifndef BSEngine_hpp
-#define BSEngine_hpp
+#ifndef PerpetualAmericanEngine_hpp
+#define PerpetualAmericanEngine_hpp
 
 #include "../options/Option.hpp"
 #include "IPricer.hpp"
@@ -20,28 +19,28 @@ namespace yvan
 {
     namespace engine
     {
-        // Black and Scholes Engine
-        class BSEngine : public IPricer
+        // Perpetual American Option Engine
+        class PerpetualAmericanEngine : public IPricer
         {
+        private:
             // --- Internal Helpers ---
-            // d1 and d2 calculations
-            double d1(const option::OptionParams& params) const;
-            double d2(const option::OptionParams& params) const;
+            // a1 and a2 calculations (roughly analogous to y1 and y2 but different)
+            double a1(const option::OptionParams& p) const;
+            double a2(const option::OptionParams& p) const;
 
         public:
             // --- Constructor & Destructor ---
-            BSEngine() = default;
-            virtual ~BSEngine() = default;
+            PerpetualAmericanEngine() = default;
+            virtual ~PerpetualAmericanEngine() = default;
 
             // --- Price ---
             using IPricer::price; // bring base class overloads into scope
-            // price function according to provided Black and Scholes model
+            // price function according to perpetual American option formula
             double price(const option::OptionParams& params) const override;
-
         };
     }
 }
 
 
 
-#endif // BSEngine_hpp
+#endif // PerpetualAmericanEngine_hpp
