@@ -6,15 +6,14 @@
 ---
 
 ## Table of Contents
-## Table of Contents
 1. [Introduction](#1-introduction)  
 2. [Project Architecture](#2-project-architecture)
-3. [Addressing Questions & Basic Functionalities](#3-addressing-questions--basic-functionalities)
-   1. [Basic Pricing Engine for European Options](#31-basic-pricing-engine-for-european-options)
-   2. [Put Call Parity](#32-put-call-parity)
-   3. [Vectorized and Grid Input](#33-vectorized-and-grid-input)
-   4. [Option Sensitivities: Analytical & Numerical Engines](#34-option-sensitivities-analytical--numerical-engines)
-   5. [The `PerpetualAmericanOption` class](#35-perpetual-american-options)
+3. [Addressing Questions & Basic Functionalities](#3-addressing-questions--basic-functionalities)  
+   3.1. [Basic Pricing Engine for European Options](#31-basic-pricing-engine-for-european-options)  
+   3.2. [Put Call Parity](#32-put-call-parity)  
+   3.3. [Vectorized and Grid Input](#33-vectorized-and-grid-input)  
+   3.4. [Option Sensitivities: Analytical & Numerical Engines](#34-option-sensitivities-analytical--numerical-engines)  
+   3.5. [The `PerpetualAmericanOption` class](#35-perpetual-american-options)  
 4. [Unit Tests and `main()`](#4-unit-tests-and-main)
 
 ## 1. Introduction
