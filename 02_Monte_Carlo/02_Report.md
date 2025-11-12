@@ -494,7 +494,7 @@ From the runs in Batches 1–2, the sample standard deviation (SD) is essentiall
 
 We see again that accuracy versus the exact price is driven primarily by $m$ and only secondarily by $n$ (discretization bias), with no strong monotone pattern in $n$ for these vanilla cases. With large $m$, relative errors become very small even at modest $n$. In Batch 2, $n=50 , m=500k$ yields $\eta = 0.00133$; raising $n$ to $5000$ at the same $m$ gives $0.00311$ (slightly worse), indicating time-discretization bias is already negligible at $n=50$. All in all, I think that the practical takeaway we should take is: tune $m$ first until SE is below our selected tolerance; then we adjust $n$ to remove residual time-discretization bias.
 
-*Disclaimer: For this part, I will only publish the code I mostly implemented myself in [TestMC_std.cpp](). Since it relies on external
+*Disclaimer: For this part, I will only publish the code I mostly implemented myself in [TestMC_std.cpp](/02_Monte_Carlo/code/TestMC_std.cpp). Since it relies on external
 dependencies it will be impossible to run it directly but it still gives a good overview of what is going on under the hood.*
 
 
