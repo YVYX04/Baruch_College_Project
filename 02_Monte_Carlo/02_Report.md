@@ -13,6 +13,12 @@
     2.2. [The Computational Finance Approach](#22-the-computational-finance-approach)   
     2.3. [Code Implementation](#23-code-implementation)  
     2.4. [Hyperparameters of the Monte Carlo Algorithm](#24-hyperparameters-of-the-monte-carlo-algorithm)
+3. [Advanced Monte Carlo](#3-advanced-monte-carlo)  
+    3.1. [Goals](#31-goals)   
+    3.2. [Code Implementations](#32-code-implementations--se)   
+    3.3. [Influence of the Hyperparameters](#33-influence-of-the-hyperparameters-on--and-se)
+
+
     
 
 
@@ -427,22 +433,69 @@ $$
 
 ### 3.2. Code Implementations: $\hat \sigma$, SE
 
+If we desire to implement a generic version of the sample standard deviation for our estimates, a classic approach is:
 
+```cpp
+template <typename Type>
+double sample_std(const std::vector<Type>& data, double r, double T)
+{
+	// mean
+	double mean = std::accumulate(data.begin(), data.end(), 0.0) / data.size();
 
+	// sum of squared differences
+	double sq_sum = 0.0;
+	for (const auto& value : data) {
+		sq_sum += (value - mean) * (value - mean);
+	}
 
+	// final result
+	return std::sqrt(sq_sum / (data.size() - 1)) * std::exp(-r * T);
+}
+```
 
+Once the discounted sample standard deviation has been computed, it is straightforward to compute the standard error:
 
+```cpp
+template <typename Type>
+double standard_error(const std::vector<Type>& data, double r, double T)
+{
+	double stddev = sample_std(data, r, T);
+	return stddev / std::sqrt(data.size());
+}
+```
 
+### 3.3. Influence of the Hyperparameters on $\hat \sigma$ and SE
 
+Now, to study the influence of the hyperparameters I basically adopted the same approach has above but
+I optimized the code to make my approach slightly more idiomatic and also be able to store the results of
+my experiment in a CSV data set. My main goal was to observe how the above statistics behave with
+changing values of $m$ and $n$. To make this more interactive, I visualized all my results in heatmaps by relying on Python. The code
+of these visualizations can be found [here](/02_Monte_Carlo/notebooks/MC_stats_evolution.ipynb).
 
+**Heatmaps**
 
+Heatmaps of the discounted sample standard deviation in function of
+$m$ and $n$:
 
+![](/02_Monte_Carlo/images/heatmap_sd_batches.png)
 
+Heatmaps of the standard error in function of
+$m$ and $n$:
 
+![](/02_Monte_Carlo/images/heatmap_se_batches.png)
 
+Heatmaps of the relative error in function of $m$ and $n$:
 
+![](/02_Monte_Carlo/images/heatmap_relerr_batches.png)
 
+**Discussion of the Results**
 
+From the runs in Batches 1–2, the sample standard deviation (SD) is essentially insensitive to the number of simulations $m$ and only weakly affected by the number of time steps $n$. By contrast, the standard error (SE) scales almost perfectly (according to the formula): holding $n$ fixed, increasing $m$ by $10 \times$ shrinks SE by $\approx \sqrt{10}$.
+
+We see again that accuracy versus the exact price is driven primarily by $m$ and only secondarily by $n$ (discretization bias), with no strong monotone pattern in $n$ for these vanilla cases. With large $m$, relative errors become very small even at modest $n$. In Batch 2, $n=50 , m=500k$ yields $\eta = 0.00133$; raising $n$ to $5000$ at the same $m$ gives $0.00311$ (slightly worse), indicating time-discretization bias is already negligible at $n=50$. All in all, I think that the practical takeaway we should take is: tune $m$ first until SE is below our selected tolerance; then we adjust $n$ to remove residual time-discretization bias.
+
+*Disclaimer: For this part, I will only publish the code I mostly implemented myself in [TestMC_std.cpp](). Since it relies on external
+dependencies it will be impossible to run it directly but it still gives a good overview of what is going on under the hood.*
 
 
 ## References
@@ -452,6 +505,11 @@ QuantNet. (2025). *Level 9: Introductory Computational Finance*. C++ Programming
 [Wikipedia. (n.d.). *Monte Carlo Method*. Retrieved on 11.11.2025 at 19:37 UTC.](https://en.wikipedia.org/wiki/Monte_Carlo_method)
 
 [Wikipedia. (n.d.). *Euler-Maruyama Method*. Retrieved on 11.11.2025 at 20:15 UTC.](https://en.wikipedia.org/wiki/Euler–Maruyama_method)
+
+
+# The End
+
+**Written by Yvan Richard**
 
 
 
