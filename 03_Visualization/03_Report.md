@@ -8,6 +8,8 @@
 ## Table of Contents
 
 1. [Introduction](#1-introduction)
+2. [Structure & Procedure](#2-structure--procedure)
+3. [Results](#3-results)
 
 
 
