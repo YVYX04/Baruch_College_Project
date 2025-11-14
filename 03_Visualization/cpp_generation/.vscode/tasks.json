@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: g++-15 build cpp_generation file",
+			"command": "/opt/homebrew/bin/g++-15",
+			"args": [
+				"-std=c++20",
+				"-Wall",
+				"-Wextra",
+				"-fdiagnostics-color=always",
+				"-g",
+				"-I",
+				"${workspaceFolder}/../../01_Exact_Pricing_Methods/include",
+				"-I",
+				"/opt/homebrew/opt/boost/include",
+				"-L",
+				"/opt/homebrew/opt/boost/lib",
+				"${workspaceFolder}/../../01_Exact_Pricing_Methods/src/**/*.cpp",
+				"${file}",
+				"-o",
+				"${fileDirname}/${fileBasenameNoExtension}"
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: /opt/homebrew/bin/g++-15"
+		}
+	]
+}
