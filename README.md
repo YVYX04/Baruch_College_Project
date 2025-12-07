@@ -17,14 +17,16 @@ It focuses on modern C++ and its applications in computational finance, combinin
 
 Throughout the program, participants master advanced C++ features (templates, STL, smart pointers, inheritance, Boost Libraries, etc.), numerical methods (Monte Carlo simulation, finite differences, PDE solvers), and object-oriented design patterns used in the quant industry.
 
----
-
-
 ### Foreword on This Repository
 
 This repository contains my final project, which consolidates key concepts learned during the certificate.
 It showcases the implementation of computational finance models using modern C++ design principles.
 
+### Outcome
+
+I am happy to say that I obtained the **C++ Programming for Financial Engineering** Certificate from Baruch College with distinction (94/100)
+on November 29 2025. 
+
 ---
 
-***Last update:*** *`Nov. 11 2025, 00:50 UTC`*
+***Last update:*** *`Dec. 7 2025, 12:02 UTC`*
